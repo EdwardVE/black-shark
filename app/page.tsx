@@ -2,6 +2,8 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+// Función auxiliar para introducir un retardo
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // --- 0. Definiciones de Tipos ---
 
@@ -27,7 +29,9 @@ interface QueryResult {
  * Función para consultar UN proceso en la API de la Rama Judicial.
  * NOTA: Esta función se mantiene para el manejo individual de la promesa.
  */
-async function querySingleJudicialProcess(processNumber: string): Promise<any> {
+async function querySingleJudicialProcess(
+  processNumber: string
+): Promise<unknown> {
   const url = `https://consultaprocesos.ramajudicial.gov.co:448/api/v2/Procesos/Consulta/NumeroRadicacion?numero=${processNumber}&SoloActivos=false&pagina=1`;
 
   const response = await fetch(url, {
@@ -39,8 +43,11 @@ async function querySingleJudicialProcess(processNumber: string): Promise<any> {
 
   if (!response.ok) {
     const errorText = await response.text();
+    // Incluir el número de proceso en el error para mejor trazabilidad
     throw new Error(
-      `Error HTTP ${response.status}: ${errorText || response.statusText}`
+      `Error HTTP ${response.status} en ${processNumber}: ${
+        errorText || response.statusText
+      }`
     );
   }
 
@@ -61,13 +68,20 @@ async function querySingleJudicialProcess(processNumber: string): Promise<any> {
 async function queryMultipleJudicialProcesses(
   processNumbers: string[]
 ): Promise<QueryResult[]> {
-  const promises = processNumbers.map((number) =>
-    querySingleJudicialProcess(number)
+  const results: QueryResult[] = [];
+  const totalNumbers = processNumbers.length;
+  let count = 0;
+
+  // Itera sobre los números de forma secuencial
+  for (const number of processNumbers) {
+    count++;
+
+    // 1. Realiza la consulta
+    const result = await querySingleJudicialProcess(number)
       .then((data) => {
-        // Mapear los datos JSON crudos a ProcessSummary
+        // Mapear los datos (lógica de mapeo se mantiene)
         const summaries: ProcessSummary[] = data.procesos.map((p: any) => ({
           llaveProceso: p.llaveProceso,
-          // La API usa fechaProceso para la radicación y fechaUltimaActuacion
           fechaRadicacion: p.fechaProceso
             ? p.fechaProceso.split("T")[0]
             : "N/A",
@@ -75,12 +89,10 @@ async function queryMultipleJudicialProcesses(
             ? p.fechaUltimaActuacion.split("T")[0]
             : "N/A",
           despachoCompleto: `${p.despacho} (${p.departamento})`,
-          // Reemplazamos el separador "|" por un salto de línea para la visualización en tabla
           sujetosProcesales: p.sujetosProcesales
             ? p.sujetosProcesales.replace(/ \| /g, "\n")
             : "N/A",
         }));
-
         return {
           processNumber: number,
           data: summaries,
@@ -93,10 +105,18 @@ async function queryMultipleJudicialProcesses(
           data: null,
           error: e.message,
         } as QueryResult;
-      })
-  );
+      });
 
-  return Promise.all(promises);
+    results.push(result);
+
+    // 2. Aplica el retardo de 1 segundo (solo si no es la última petición)
+    if (count < totalNumbers) {
+      console.log(`Pausando 1 segundo después de consultar ${number}...`);
+      await delay(2000); // Retardo de 1000 milisegundos = 1 segundo
+    }
+  }
+
+  return results;
 }
 
 // --- 2. COMPONENTES SECUNDARIOS ---
@@ -313,6 +333,7 @@ export default function QueryPage() {
       const numbersToQuery = processNumbersInput
         .split(/[\s,]+/) // Separar por espacios o comas
         .map((num) => num.trim())
+        .map((num) => num.replace(/,/g, "")) // Eliminar comas
         .filter((num) => num.length > 0); // Eliminar vacíos
 
       if (numbersToQuery.length === 0) {
@@ -331,7 +352,8 @@ export default function QueryPage() {
       try {
         // 3. Llama a la nueva función de consulta múltiple
         const queryResults = await queryMultipleJudicialProcesses(
-          numbersToQuery
+          numbersToQuery,
+          2
         );
 
         // 4. Actualizar el estado con todos los resultados

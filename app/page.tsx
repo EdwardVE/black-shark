@@ -352,8 +352,7 @@ export default function QueryPage() {
       try {
         // 3. Llama a la nueva función de consulta múltiple
         const queryResults = await queryMultipleJudicialProcesses(
-          numbersToQuery,
-          2
+          numbersToQuery
         );
 
         // 4. Actualizar el estado con todos los resultados

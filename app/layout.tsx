@@ -28,6 +28,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <footer className="w-full max-w-4xl text-center py-4 mt-auto text-sm text-gray-500 dark:text-gray-400 border-t border-border-color/50">
+          Página de consulta de procesos judiciales de Colombia.
+        </footer>
       </body>
     </html>
   );

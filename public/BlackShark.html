@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Backend por ID</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    
+    <!-- Configuración de Tailwind para clases de color personalizadas y modo oscuro -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class', // Habilita el modo oscuro basado en la clase 'dark'
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'bg-primary': 'var(--color-bg-primary)',
+                        'text-primary': 'var(--color-text-primary)',
+                        'accent-color': 'var(--color-accent)',
+                        'input-bg': 'var(--color-input-bg)',
+                        'border-color': 'var(--color-border)',
+                    }
+                },
+            },
+        }
+    </script>
+
+    <style>
+        /* Definición de Variables CSS para Temas */
+        /* Modo Claro (por defecto) */
+        :root {
+            --color-bg-primary: #ffffff;
+            --color-text-primary: #1f2937; /* Gray-800 */
+            --color-accent: #10b981; /* Emerald-500 */
+            --color-input-bg: #f9fafb; /* Gray-50 */
+            --color-border: #e5e7eb; /* Gray-200 */
+        }
+
+        /* Modo Oscuro */
+        .dark {
+            --color-bg-primary: #111827; /* Gray-900 */
+            --color-text-primary: #f9fafb; /* Gray-50 */
+            --color-accent: #34d399; /* Emerald-400 */
+            --color-input-bg: #1f2937; /* Gray-800 */
+            --color-border: #374151; /* Gray-700 */
+        }
+
+        /* Estilos base con variables CSS */
+        body {
+            background-color: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            transition: background-color 0.3s, color 0.3s;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Estilos específicos para el botón del tema */
+        #theme-toggle svg {
+            transition: transform 0.3s ease;
+        }
+        #theme-toggle:hover svg {
+            transform: scale(1.1);
+        }
+    </style>
+
+    <!-- Script de Inicialización del Tema (Anti-FOUC) -->
+    <script is:inline>
+        // Función para aplicar el tema guardado o el preferido por el sistema
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
+</head>
+<body class="font-sans">
+
+    <!-- Encabezado y Toggle de Tema -->
+    <header class="w-full max-w-4xl px-4 py-6 flex justify-between items-center">
+        <h1 class="text-3xl font-bold text-accent-color">Consultas Backend</h1>
+        
+        <!-- Botón de Toggle de Tema -->
+        <button id="theme-toggle" 
+                class="p-3 rounded-full bg-input-bg shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-accent-color transition duration-300 border border-border-color"
+                aria-label="Alternar modo oscuro y claro">
+            <!-- Icono del Sol (Modo Claro) / Icono de la Luna (Modo Oscuro) -->
+            <svg id="sun-icon" class="w-6 h-6 text-yellow-500 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+            </svg>
+            <svg id="moon-icon" class="w-6 h-6 text-gray-500 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+            </svg>
+        </button>
+    </header>
+
+    <!-- Contenedor Principal de la Aplicación -->
+    <main class="w-full max-w-4xl p-4 md:p-8 flex flex-col items-center">
+
+        <!-- Tarjeta de Formulario de Consulta -->
+        <div class="w-full bg-bg-primary p-6 md:p-8 rounded-xl shadow-2xl border border-border-color transition duration-500">
+            <h2 class="text-2xl font-semibold mb-6">Buscar Elemento por ID</h2>
+
+            <form id="query-form" class="space-y-4">
+                <div class="flex flex-col space-y-2">
+                    <label for="item-id" class="text-sm font-medium">ID de Consulta (Ej: 1, 2, 3)</label>
+                    <input type="number" id="item-id" name="item-id" required min="1" max="10"
+                           class="p-3 border border-border-color rounded-lg bg-input-bg text-text-primary focus:ring-accent-color focus:border-accent-color transition duration-300 shadow-sm"
+                           placeholder="Ingresa el ID del elemento">
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Por favor, ingresa un número entre 1 y 10 para probar la simulación.</p>
+                </div>
+
+                <button type="submit" id="submit-button"
+                        class="w-full py-3 mt-4 bg-accent-color text-white font-bold rounded-lg shadow-lg hover:bg-emerald-600 transition duration-300 transform hover:scale-[1.01] focus:outline-none focus:ring-4 focus:ring-accent-color/50">
+                    Consultar
+                </button>
+            </form>
+
+            <!-- Indicador de Carga (Spinner) -->
+            <div id="loading-spinner" class="mt-6 text-center hidden">
+                <svg class="animate-spin h-8 w-8 text-accent-color mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="mt-2 text-sm text-gray-500">Consultando datos...</p>
+            </div>
+        </div>
+
+        <!-- Área de Resultados -->
+        <div id="result-area" class="w-full mt-8 p-6 rounded-xl border border-border-color shadow-xl hidden">
+            <h3 class="text-xl font-semibold mb-4 border-b border-border-color pb-2">Resultado de la Consulta</h3>
+            <pre id="result-json" class="whitespace-pre-wrap font-mono text-sm p-4 rounded-lg bg-input-bg border border-border-color overflow-auto"></pre>
+        </div>
+
+        <!-- Área de Mensajes (Error/Info) -->
+        <div id="message-box" class="w-full mt-4 p-4 rounded-lg hidden transition-opacity duration-300" role="alert">
+            <p id="message-text" class="font-medium"></p>
+        </div>
+
+    </main>
+
+    <footer class="w-full max-w-4xl text-center py-4 mt-auto text-sm text-gray-500 dark:text-gray-400 border-t border-border-color/50">
+        Diseñado con enfoque en rendimiento y accesibilidad.
+    </footer>
+
+    <script>
+        // --- 1. LÓGICA DEL TEMA OSCURO/CLARO ---
+        const themeToggle = document.getElementById('theme-toggle');
+        const htmlElement = document.documentElement;
+
+        themeToggle.addEventListener('click', () => {
+            if (htmlElement.classList.contains('dark')) {
+                htmlElement.classList.remove('dark');
+                htmlElement.classList.add('light');
+                localStorage.setItem('theme', 'light');
+            } else {
+                htmlElement.classList.remove('light');
+                htmlElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+            updateThemeIcons();
+        });
+
+        function updateThemeIcons() {
+            const isDark = htmlElement.classList.contains('dark');
+            document.getElementById('sun-icon').classList.toggle('hidden', !isDark);
+            document.getElementById('moon-icon').classList.toggle('hidden', isDark);
+        }
+
+        // Inicializar los íconos del tema al cargar
+        document.addEventListener('DOMContentLoaded', updateThemeIcons);
+
+        // --- 2. LÓGICA DE LA CONSULTA AL BACKEND SIMULADO ---
+        const form = document.getElementById('query-form');
+        const itemIdInput = document.getElementById('item-id');
+        const resultArea = document.getElementById('result-area');
+        const resultJson = document.getElementById('result-json');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const submitButton = document.getElementById('submit-button');
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+
+        // Datos simulados (como si vinieran del backend)
+        const mockData = [
+            { id: 1, name: "Planeta Kepler-186f", type: "Exoplaneta", status: "Activo", details: { mass: "3.2 * Tierra", habitable: true } },
+            { id: 2, name: "Nebulosa de Orión", type: "Nebulosa", status: "Estudiando", details: { distance_ly: 1344, visible_to_naked_eye: true } },
+            { id: 3, name: "Sonda Voyager 1", type: "Nave Espacial", status: "Interstellar", details: { launch_date: "1977-09-05", distance_au: 162 } },
+            { id: 4, name: "Agujero Negro Sagitario A*", type: "Agujero Negro Supermasivo", status: "Activo", details: { location: "Centro de la Vía Láctea", event_horizon_km: "12 millones" } },
+            { id: 5, name: "Galaxia Andrómeda (M31)", type: "Galaxia Espiral", status: "Acercándose", details: { speed_km_s: 110, collision_in_billion_years: 4 } },
+            { id: 6, name: "Cúmulo globular M13", type: "Cúmulo Estelar", status: "Estudiando", details: { stars: "Más de 100,000", constellation: "Hércules" } },
+        ];
+        
+        // Simula la llamada a la API (fetch)
+        function simulateBackendQuery(id) {
+            return new Promise((resolve, reject) => {
+                // Simulación de latencia de red (1-2 segundos)
+                setTimeout(() => {
+                    const item = mockData.find(d => d.id === id);
+                    if (item) {
+                        resolve(item);
+                    } else if (id < 1 || id > 6) {
+                        // Simular IDs fuera de rango o con error
+                        reject(new Error(`El ID ${id} está fuera del rango de datos disponibles (1-6).`));
+                    } else {
+                        // Simular 404 para un ID válido pero no existente en el mock (e.g., ID 7-10)
+                         reject(new Error(`No se encontró ningún elemento con el ID ${id}. (Error 404)`));
+                    }
+                }, Math.random() * 1000 + 1000); // 1 a 2 segundos
+            });
+        }
+
+        // Función para mostrar mensajes de error/info
+        function showMessage(text, isError = false) {
+            messageText.textContent = text;
+            messageBox.classList.remove('hidden', 'bg-red-100', 'text-red-800', 'bg-green-100', 'text-green-800', 'dark:bg-red-900', 'dark:text-red-100', 'dark:bg-green-900', 'dark:text-green-100');
+            
+            if (isError) {
+                messageBox.classList.add('bg-red-100', 'text-red-800', 'dark:bg-red-900', 'dark:text-red-100');
+            } else {
+                messageBox.classList.add('bg-green-100', 'text-green-800', 'dark:bg-green-900', 'dark:text-green-100');
+            }
+
+            // Ocultar el mensaje después de 5 segundos
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 5000);
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const itemId = parseInt(itemIdInput.value);
+
+            if (isNaN(itemId) || itemId < 1) {
+                showMessage("Por favor, ingresa un ID válido.", true);
+                return;
+            }
+
+            // Limpiar resultados anteriores y mensajes
+            resultArea.classList.add('hidden');
+            messageBox.classList.add('hidden');
+
+            // Mostrar spinner y deshabilitar botón
+            loadingSpinner.classList.remove('hidden');
+            submitButton.disabled = true;
+            submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+
+            try {
+                const data = await simulateBackendQuery(itemId);
+                
+                // Mostrar resultado
+                resultJson.textContent = JSON.stringify(data, null, 2);
+                resultArea.classList.remove('hidden');
+                showMessage(`¡Consulta exitosa! Datos para ID ${itemId} cargados.`, false);
+
+            } catch (error) {
+                // Mostrar error
+                console.error("Error en la consulta:", error);
+                resultJson.textContent = `Error al consultar el ID ${itemId}:\n${error.message}`;
+                resultArea.classList.remove('hidden');
+                showMessage(error.message || "Ocurrió un error desconocido al obtener los datos.", true);
+                
+            } finally {
+                // Ocultar spinner y habilitar botón
+                loadingSpinner.classList.add('hidden');
+                submitButton.disabled = false;
+                submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        });
+    </script>
+</body>
+</html>

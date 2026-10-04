@@ -42,3 +42,6 @@ next-env.d.ts
 
 # datos de clientes (matrices de procesos)
 *.xlsx
+
+# salida generada por graphify (contiene rutas locales)
+graphify-out/

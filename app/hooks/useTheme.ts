@@ -1,31 +1,34 @@
 // hooks/useTheme.ts
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useSyncExternalStore } from "react";
+
+// El tema vive en la clase .dark de <html>, que el script de layout.tsx
+// aplica antes de pintar. Este hook solo la observa y la cambia.
+function suscribir(onCambio: () => void) {
+  const observador = new MutationObserver(onCambio);
+  observador.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class"],
+  });
+  return () => observador.disconnect();
+}
+
+const leerTema = () => document.documentElement.classList.contains("dark");
 
 export function useTheme() {
-  const [isDark, setIsDark] = useState<boolean>(false);
+  const isDark = useSyncExternalStore(suscribir, leerTema, () => false);
 
-  // 1. Inicialización del Tema
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme");
-    const prefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)"
-    ).matches;
-
-    const initialDark = savedTheme === "dark" || (!savedTheme && prefersDark);
-    setIsDark(initialDark);
-    document.documentElement.classList.toggle("dark", initialDark);
-  }, []);
-
-  // 2. Función para alternar el tema
   const toggleTheme = useCallback(() => {
-    setIsDark((prev) => {
-      const newIsDark = !prev;
-      document.documentElement.classList.toggle("dark", newIsDark);
-      localStorage.setItem("theme", newIsDark ? "dark" : "light");
-      return newIsDark;
-    });
+    const raiz = document.documentElement;
+    const nuevoIsDark = !raiz.classList.contains("dark");
+    raiz.classList.toggle("dark", nuevoIsDark);
+    raiz.style.colorScheme = nuevoIsDark ? "dark" : "light";
+    try {
+      localStorage.setItem("theme", nuevoIsDark ? "dark" : "light");
+    } catch {
+      // Sin almacenamiento (modo privado): el tema dura solo esta visita.
+    }
   }, []);
 
   return { isDark, toggleTheme };

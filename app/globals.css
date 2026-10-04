@@ -1,43 +1,57 @@
 @import "tailwindcss";
 
-/* 1. Carga de la Fuente Inter */
-/* @import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"); */
+/* El modo oscuro lo decide la clase .dark en <html> (botón de tema),
+   no la preferencia del sistema operativo. */
+@custom-variant dark (&:where(.dark, .dark *));
 
-/* 2. Definición de Variables CSS para Temas */
+/* Tokens de color: generan utilidades como bg-surface, text-fg, border-border… */
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
-/* Modo Claro (por defecto) */
-:root {
-  --color-bg-primary: #ffffff;
-  --color-text-primary: #1f2937; /* Gray-800 */
-  --color-accent: #10b981; /* Emerald-500 */
-  --color-input-bg: #f9fafb; /* Gray-50 */
-  --color-border: #e5e7eb; /* Gray-200 */
+  --color-surface: #ffffff;
+  --color-surface-2: #f3f4f6;
+  --color-fg: #111827;
+  --color-muted: #6b7280;
+  --color-border: #e5e7eb;
+  --color-accent: #047857;
+  --color-accent-hover: #065f46;
+  --color-accent-fg: #ffffff;
+
+  --color-ok: #166534;
+  --color-ok-bg: #dcfce7;
+  --color-warn: #854d0e;
+  --color-warn-bg: #fef9c3;
+  --color-danger: #991b1b;
+  --color-danger-bg: #fee2e2;
+  --color-info: #1e40af;
+  --color-info-bg: #dbeafe;
 }
 
-/* Modo Oscuro */
 .dark {
-  --color-bg-primary: #111827; /* Gray-900 */
-  --color-text-primary: #f9fafb; /* Gray-50 */
-  --color-accent: #34d399; /* Emerald-400 */
-  --color-input-bg: #1f2937; /* Gray-800 */
-  --color-border: #374151; /* Gray-700 */
+  --color-surface: #1f2937;
+  --color-surface-2: #111827;
+  --color-fg: #f9fafb;
+  --color-muted: #9ca3af;
+  --color-border: #374151;
+  --color-accent: #34d399;
+  --color-accent-hover: #6ee7b7;
+  --color-accent-fg: #052e16;
+
+  --color-ok: #bbf7d0;
+  --color-ok-bg: #14532d;
+  --color-warn: #fef08a;
+  --color-warn-bg: #713f12;
+  --color-danger: #fecaca;
+  --color-danger-bg: #7f1d1d;
+  --color-info: #bfdbfe;
+  --color-info-bg: #1e3a8a;
 }
 
-/* 3. Estilos Base */
 body {
-  background-color: var(--color-bg-primary);
-  color: var(--color-text-primary);
-  transition: background-color 0.3s, color 0.3s;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* Estilos específicos para el botón del tema */
-#theme-toggle svg {
-  transition: transform 0.3s ease;
-}
-#theme-toggle:hover svg {
-  transform: scale(1.1);
+  background-color: var(--color-surface-2);
+  color: var(--color-fg);
+  transition:
+    background-color 0.3s,
+    color 0.3s;
 }
